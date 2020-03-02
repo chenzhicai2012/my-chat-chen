@@ -1,53 +1,64 @@
 <template>
-  <div class="th-message" :style="{marginTop:`-${topPadding}px`}">
+  <div class="th-message" :style="{ marginTop: `-${topPadding}px` }">
     <scroller class="messagebox" ref="scrollerEvent" lock-x v-model="status" :height="bottomheight"
       :use-pulldown="usePulldown" @on-pulldown-loading="pulldown" @on-scroll="onscroll">
-      <div ref="scrollbox" :style="{paddingTop:`${topPadding}px`}">
-        <div class="message-item"
-          :class="{'people-item':i.type==1,'doc-item':i.type==2,'msg-item':i.type==3,'default-item':i.type==4,'isimg':i.isimg}"
-          v-for="i in messageData">
-          <img class="headimg" :src="i.headImg||i.type==1?selfFace||people:otherFace||doc" @click.stop="faceclick(i)">
+      <div ref="scrollbox" :style="{ paddingTop: `${topPadding}px` }">
+        <div class="message-item" :class="{
+            'people-item': i.type == 1,
+            'doc-item': i.type == 2,
+            'msg-item': i.type == 3,
+            'default-item': i.type == 4,
+            isimg: i.isimg
+          }" v-for="i in messageData">
+          <img class="headimg" :src="
+              i.headImg || i.type == 1 ? selfFace || people : otherFace || doc
+            " @click.stop="faceclick(i)" />
           <div class="mtext" v-html="i.text" @click.stop="msgclick(i)"></div>
         </div>
-        <x-button v-if="bigBtn!=''" class="pbtn" type="primary" @click.native="btnCall">{{bigBtn}}</x-button>
+        <x-button v-if="bigBtn != ''" class="pbtn" type="primary" @click.native="btnCall">{{ bigBtn }}</x-button>
       </div>
       <div v-if="usePulldown" slot="pulldown" class="th-pulldown" style="position: absolute; top:100px;"
-        :style="{top:`${parseInt(topPadding||0)-60}px`}">
-        <span v-show="status.pulldownStatus === 'default'" v-html="`${pulldownConfig.default||'下拉刷新'}`"></span>
-        <span v-show="status.pulldownStatus === 'down'" v-html="`${pulldownConfig.down||'下拉刷新'}`"></span>
-        <span v-show="status.pulldownStatus === 'up'" v-html="`${pulldownConfig.up||'松开刷新'}`"></span>
-        <span v-show="status.pulldownStatus === 'loading'" v-html="`${pulldownConfig.loading||'加载中...'}`"></span>
+        :style="{ top: `${parseInt(topPadding || 0) - 60}px` }">
+        <span v-show="status.pulldownStatus === 'default'" v-html="`${pulldownConfig.default || '下拉刷新'}`"></span>
+        <span v-show="status.pulldownStatus === 'down'" v-html="`${pulldownConfig.down || '下拉刷新'}`"></span>
+        <span v-show="status.pulldownStatus === 'up'" v-html="`${pulldownConfig.up || '松开刷新'}`"></span>
+        <span v-show="status.pulldownStatus === 'loading'" v-html="`${pulldownConfig.loading || '加载中...'}`"></span>
       </div>
     </scroller>
-    <div ref="thMessageInput" class="inputbox" :class="{'textShow':textShow}" v-if="showInput!=false">
+    <div ref="thMessageInput" class="inputbox" :class="{ textShow: textShow }" v-if="showInput != false">
       <template v-if="!useText">
-        <i class="icon-add" :class="{isopen:funcShow}" @click="openfunc"></i>
-        <i v-if="showEmoticon" class="icon-face" :class="{isopen:faceShow}" @click="openface"></i>
+        <i class="icon-add" :class="{ isopen: funcShow }" @click="openfunc"></i>
+        <i v-if="showEmoticon" class="icon-face" :class="{ isopen: faceShow }" @click="openface"></i>
         <input ref="thMessageInputF" class="messageinput" v-model="inputmodel" type="text" @focus="onfocus"
           @blur="onblur" />
-        <x-button class="sendbtn" :type="inputmodel.trim()==''?'default':'primary'" :disabled="inputmodel.trim()==''"
-          @click.native="changecount">
+        <x-button class="sendbtn" :type="inputmodel.trim() == '' ? 'default' : 'primary'"
+          :disabled="inputmodel.trim() == ''" @click.native="changecount">
           发送
         </x-button>
       </template>
       <template v-if="useText">
-        <div v-show="!textShow" class="usetext" :class="{'hide-emoticon':!showEmoticon}">
-          <x-button class="textbtn" type="default" @click.native="showText">
-            点击输入文字
-          </x-button>
+        <div v-show="!textShow" class="usetext" :class="{ 'hide-emoticon': !showEmoticon }">
+          <!-- <x-button class="textbtn" type="default" @click.native="showText">
+            点击输入文字1
+          </x-button> -->
+          <x-input class="inputBox" v-model='inputmodel' placeholder="点击输入文字" @on-enter='changecount'></x-input>
 
-          <i class="icon-add" :class="{isopen:funcShow}" @click="openfunc"></i>
-          <i v-if="showEmoticon" class="icon-face" :class="{isopen:faceShow}" @click="openface"></i>
+          <i v-if="showEmoticon" class="icon-face" :class="{ isopen: faceShow }" @click="openface"></i>
+          <i class="icon-add" :class="{ isopen: funcShow }" @click="openfunc"></i>
+
         </div>
         <div v-show="textShow" class="usetexttitle">
-          <span>{{textTitle}}</span>
+          <span>{{ textTitle }}</span>
           <span v-show="!textfocus" class="usetexthidebox" @click="hideBox">取消</span>
         </div>
       </template>
     </div>
     <funcbox v-show="funcShow" :funclist="funclist"></funcbox>
     <facebox v-show="faceShow" ref="facebox" :facelist="facelist" @itemClick="faceItemClick"></facebox>
-
+    <div class='fixBtn' v-show="faceShow">
+      <!-- <x-button :mini='true' @click.native='cancel'>删除</x-button> -->
+      <x-button :mini='true' @click.native='changecount'>发送</x-button>
+    </div>
     <textbox v-show="textShow" ref="textbox" @sendText="sendText" @textFocus="textFocus" @textBlur="textBlur"></textbox>
   </div>
 </template>
@@ -62,7 +73,8 @@
 
   import {
     Scroller,
-    XButton
+    XButton,
+    XInput
   } from "vux";
   import {
     facelist
@@ -117,7 +129,7 @@
       },
       textTitle: {
         type: String,
-        default: '输入文字'
+        default: "输入文字"
       }
     },
     components: {
@@ -125,7 +137,8 @@
       XButton,
       facebox,
       funcbox,
-      textbox
+      textbox,
+      XInput
     },
     watch: {
       textfocus(e) {
@@ -236,25 +249,22 @@
         const imgs = document.querySelectorAll(".mtext>img");
         if (imgs.length == 0) {
           this.messageReset();
-          if (this.fromTop)
-            this.scrollToTop()
+          if (this.fromTop) this.scrollToTop();
         } else {
           imgs.forEach(e => {
             e.addEventListener(
               "load",
               () => {
-                this.messageReset()
-                if (this.fromTop)
-                  this.scrollToTop()
+                this.messageReset();
+                if (this.fromTop) this.scrollToTop();
               },
               false
             );
           });
         }
         setTimeout(() => {
-          this.messageReset()
-          if (this.fromTop)
-            this.scrollToTop()
+          this.messageReset();
+          if (this.fromTop) this.scrollToTop();
         }, 1000);
       });
     },
@@ -262,7 +272,7 @@
       scrollToTop() {
         this.$refs.scrollerEvent.reset({
           top: 0
-        })
+        });
       },
       onfocus() {
         this.hideBox();
@@ -344,7 +354,7 @@
       faceItemClick(i) {
         this.inputmodel += `[${i}]`;
         if (this.useText) {
-          this.changecount();
+          // this.changecount();
         }
       },
       openfunc() {
@@ -387,6 +397,9 @@
       },
       textBlur() {
         this.textfocus = false;
+      },
+      cancel() {
+        console.log(this.inputmodel)
       }
     }
   };
